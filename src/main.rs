@@ -45,6 +45,12 @@ impl State {
         resources.insert(Camera::new(map_builder.player_start));
         spawn_player(&mut world, map_builder.player_start);
 
+        map_builder.rooms
+            .iter()
+            .skip(1)
+            .map(|r| r.center())
+            .for_each(|pos| spawn_monster(&mut world, &mut rng, pos));
+
         Self {
             world,
             resources,
