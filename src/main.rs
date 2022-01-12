@@ -1,44 +1,60 @@
 mod camera;
+mod components;
 mod map;
 mod map_builder;
-mod player;
+mod spawner;
+mod systems;
 
+// I feel this author is a bit trigger happy with the prelude, but I assume its
+// to make the sample code less verbose / intimidating, but it obfuscates dependencies
+// just every module is dependent on _everything_ the crate depends on if use statements 
+// were to be believed, I don't fancy disentagling this right now though
 mod prelude {
     pub use bracket_lib::prelude::*;
+    pub use legion::*;
+    pub use legion::world::SubWorld;
+    pub use legion::systems::CommandBuffer;
     pub const SCREEN_WIDTH: i32 = 80;
     pub const SCREEN_HEIGHT: i32 = 50;
     pub const DISPLAY_WIDTH: i32 = SCREEN_WIDTH / 2;
     pub const DISPLAY_HEIGHT: i32 = SCREEN_HEIGHT / 2;
     pub use crate::camera::*;
+    pub use crate::components::*;
     pub use crate::map::*;
     pub use crate::map_builder::*;
-    pub use crate::player::*;
+    pub use crate::spawner::*;
+    pub use crate::systems::*;
 }
 
 use prelude::*;
 
 struct State {
-    camera: Camera,
-    map: Map,
-    player: Player,
+    world: World,
+    resources: Resources,
+    systems: Schedule
 }
 
 impl State {
     fn new() -> Self {
+        let mut world = World::default();
+        let mut resources = Resources::default();
         let mut rng = RandomNumberGenerator::new();
         let map_builder = MapBuilder::new(&mut rng);
-        Self { 
-            map: map_builder.map,
-            player: Player::new(map_builder.player_start),
-            camera: Camera::new(map_builder.player_start),
+        
+        resources.insert(map_builder.map);
+        resources.insert(Camera::new(map_builder.player_start));
+        spawn_player(&mut world, map_builder.player_start);
+
+        Self {
+            world,
+            resources,
+            systems: build_scheduler(),
         }
     }
 }
 
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
-        self.player.update(ctx, &self.map, &mut self.camera);
-
         // I don't know why but trying to use the books code layer 0 for map and layer 1 for 
         // player with 0 being w/ bg and 2 being w/o bg then it doesn't render the map
         // if you change console 0 to be no_bg it renders it as ascii and offset. 
@@ -46,11 +62,13 @@ impl GameState for State {
         // :thinking: wonder if this is the same on other platfroms
         ctx.set_active_console(1);
         ctx.cls();
-        self.map.render(ctx, &self.camera);
 
         ctx.set_active_console(2);
         ctx.cls();
-        self.player.render(ctx, &self.camera);
+
+        self.resources.insert(ctx.key);
+        self.systems.execute(&mut self.world, &mut self.resources);
+        render_draw_buffer(ctx).expect("Render error");
     }
 }
 
