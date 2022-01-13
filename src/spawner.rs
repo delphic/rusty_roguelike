@@ -26,7 +26,8 @@ pub fn spawn_monster(world: &mut World, rng: &mut RandomNumberGenerator, pos: Po
 					2 => to_cp437('o'),
 					_ => to_cp437('g'),
 				} // TODO: Store type somehow and select glyph accordingly rather than RNGing random enemies that are all the same
-			}
+			},
+			MovingRandomly{},
 		)
 	);
 }
