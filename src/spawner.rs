@@ -14,6 +14,19 @@ pub fn spawn_player(world: &mut World, pos: Point) {
 	);
 }
 
+pub fn spawn_amulet_of_yala(world: &mut World, pos: Point) {
+	world.push((
+		Item,
+		AmuletOfYala,
+		pos,
+		Render { 
+			color: ColorPair::new(WHITE, BLACK),
+			glyph: to_cp437('|'),
+		},
+		Name("Amulet of Yala".to_string())
+	));
+}
+
 pub fn spawn_monster(world: &mut World, rng: &mut RandomNumberGenerator, pos: Point) {
 	let (hp, name, glyph) = match rng.roll_dice(1, 10) {
 		1..=8 => goblin(),

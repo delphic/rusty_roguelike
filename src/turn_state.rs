@@ -3,5 +3,6 @@ pub enum TurnState {
 	AwaitingInput,
 	PlayerTurn,
 	MonsterTurn,
-	GameOver, // This isn't a Turn State it's a game state
+	GameOver, // This isn't a Turn State, it's a game state
+	Victory, // This too
 }
