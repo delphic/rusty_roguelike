@@ -69,18 +69,20 @@ impl State {
 
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
-        // I don't know why but trying to use the books code layer 0 for map and layer 1 for 
-        // player with 0 being w/ bg and 2 being w/o bg then it doesn't render the map
-        // if you change console 0 to be no_bg it renders it as ascii and offset. 
-        // This hack of using 3 layer and just not using layer 0 seems to work. :shrug:
-        // :thinking: wonder if this is the same on other platfroms
+        // Seems like set_active_console is 1 indexed despite the book saying it's 0 indexed
         ctx.set_active_console(1);
         ctx.cls();
 
         ctx.set_active_console(2);
         ctx.cls();
 
+        ctx.set_active_console(3);
+        ctx.cls();
+
         self.resources.insert(ctx.key);
+        ctx.set_active_console(1);
+        self.resources.insert(Point::from_tuple(ctx.mouse_pos()));
+
         let current_state = self.resources.get::<TurnState>().unwrap().clone(); // this clone is to not annoy the borrow checker
         match current_state {
             TurnState::AwaitingInput => self.input_systems.execute(&mut self.world, &mut self.resources),
@@ -99,9 +101,10 @@ fn main() -> BError {
         .with_tile_dimensions(32, 32)
         .with_resource_path("resources/")
         .with_font("dungeonfont.png", 32, 32)
+        .with_font("terminal8x8.png", 8, 8)
         .with_simple_console(DISPLAY_WIDTH, DISPLAY_HEIGHT, "dungeonfont.png")
         .with_simple_console_no_bg(DISPLAY_WIDTH, DISPLAY_HEIGHT, "dungeonfont.png")
-        .with_simple_console_no_bg(DISPLAY_WIDTH, DISPLAY_HEIGHT, "dungeonfont.png")
+        .with_simple_console_no_bg(SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2, "terminal8x8.png")
         .build()?;
     main_loop(context, State::new())
 }
