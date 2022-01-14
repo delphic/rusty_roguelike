@@ -20,10 +20,28 @@ pub fn player_input(
 
 			// Don't check for delta != 0 as want to be able to skip turn
 			let mut players = <(Entity, &Point)>::query().filter(component::<Player>());
-			players.iter(sub_world).for_each(|(entity, pos)| {
-				let destination = *pos + delta;
-				commands.push(( (), WantsToMove{ entity: *entity, destination } ));
-			});
+
+			let (player_entity, destination) = players
+				.iter(sub_world)
+				.find_map(|(entity, pos)| Some((*entity, *pos + delta)))
+				.unwrap();
+
+			let mut is_attacking = false;
+			let mut enemies = <(Entity, &Point)>::query().filter(component::<Enemy>());
+			if delta.x != 0 || delta.y != 0 {
+				enemies
+					.iter(sub_world)
+					.filter(|(_, pos)| { **pos == destination })
+					.for_each(|(entity, _)| {
+						is_attacking = true;
+						commands.push(((), WantsToAttack { attacker: player_entity, victim: *entity }));
+					})
+			}
+
+			if !is_attacking {
+				commands.push(((), WantsToMove { entity: player_entity, destination }));
+			}
+
 			*turn_state = TurnState::PlayerTurn;
 		}
 }
