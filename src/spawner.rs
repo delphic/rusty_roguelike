@@ -9,7 +9,7 @@ pub fn spawn_player(world: &mut World, pos: Point) {
 				color: ColorPair::new(WHITE, BLACK),
 				glyph: to_cp437('@'),
 			},
-			Health { current: 20, max: 20 },
+			Health { current: 10, max: 10 },
 		)
 	);
 }
@@ -28,7 +28,7 @@ pub fn spawn_monster(world: &mut World, rng: &mut RandomNumberGenerator, pos: Po
 				color: ColorPair::new(WHITE, BLACK),
 				glyph
 			},
-			MovingRandomly{},
+			ChasingPlayer{},
 			Health { current: hp, max: hp },
 			Name(name),
 		)
