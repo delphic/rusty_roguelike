@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use std::collections::HashSet;
 
 #[system]
 #[read_component(Point)]
@@ -21,6 +22,8 @@ pub fn chasing(#[resource] map: &Map, sub_world: &SubWorld, commands: &mut Comma
 		map, 
 		1024.0);
 
+	let mut taken_destinations = HashSet::new(); // prevent stacking
+
 	movers.iter(sub_world).for_each(|(entity, pos, _)| {
 		let idx = get_map_idx(pos.x, pos.y);
 		if let Some(destination) = DijkstraMap::find_lowest_exit(&dijkstra_map, idx, map) {
@@ -39,9 +42,13 @@ pub fn chasing(#[resource] map: &Map, sub_world: &SubWorld, commands: &mut Comma
 						commands.push(((), WantsToAttack { attacker: *entity, victim: *victim }));
 					}
 					should_move = false;
+					// This also prevents moving into another units space, however, if they are successfully moving then 
+					// actually this should be allowed - run from closest to furthest and tracking who is going to move
+					// would allow us to resolve this (although that only works because the behaviour is simple (chase))
 				});
 			
-			if should_move {
+			if should_move && !taken_destinations.contains(&destination) {
+				taken_destinations.insert(destination);
 				commands.push(((), WantsToMove { entity: *entity, destination }));
 			}
 		}
