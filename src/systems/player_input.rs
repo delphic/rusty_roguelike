@@ -3,7 +3,7 @@ use crate::prelude::*;
 #[system]
 #[write_component(Point)]
 #[read_component(Player)]
-#[read_component(Enemy)] // Don't actually think we need this?
+#[read_component(Enemy)]
 #[write_component(Health)]
 pub fn player_input(
 	sub_world: &mut SubWorld,

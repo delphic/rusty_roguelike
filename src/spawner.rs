@@ -10,6 +10,7 @@ pub fn spawn_player(world: &mut World, pos: Point) {
 				glyph: to_cp437('@'),
 			},
 			Health { current: 3, max: 3 },
+			FieldOfView::new(8),
 		)
 	);
 }
@@ -44,6 +45,7 @@ pub fn spawn_monster(world: &mut World, rng: &mut RandomNumberGenerator, pos: Po
 			ChasingPlayer{},
 			Health { current: hp, max: hp },
 			Name(name),
+			FieldOfView::new(6),
 		)
 	);
 }
