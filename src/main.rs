@@ -51,12 +51,9 @@ impl State {
 
         spawn_player(&mut world, map_builder.player_start);
         spawn_amulet_of_yala(&mut world, map_builder.amulet_start);
-
-        map_builder.rooms
+        map_builder.monster_spawns
             .iter()
-            .skip(1)
-            .map(|r| r.center())
-            .for_each(|pos| spawn_monster(&mut world, &mut rng, pos));
+            .for_each(|pos| spawn_monster(&mut world, &mut rng, *pos));
 
         Self {
             world,
@@ -74,8 +71,9 @@ impl State {
         let map_builder = MapBuilder::new(&mut rng);
         spawn_player(&mut self.world, map_builder.player_start);
         spawn_amulet_of_yala(&mut self.world, map_builder.amulet_start);
-        map_builder.rooms.iter().skip(1).map(|r| r.center())
-            .for_each(|pos| spawn_monster(&mut self.world, &mut rng, pos));
+        map_builder.monster_spawns.iter()
+            .for_each(|pos| spawn_monster(&mut self.world, &mut rng, *pos));
+        
         self.resources.insert(map_builder.map);
         self.resources.insert(Camera::new(map_builder.player_start));
         self.resources.insert(TurnState::AwaitingInput);
