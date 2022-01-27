@@ -29,6 +29,11 @@ impl Map {
 			&& point.y >= 0 && point.y < SCREEN_HEIGHT
 	}
 
+	pub fn within_borders(&self, point: Point) -> bool {
+		point.x >= 1 && point.x < SCREEN_WIDTH - 1
+			&& point.y >= 1 && point.y < SCREEN_HEIGHT - 1
+	}
+
 	pub fn can_enter_tile(&self, point: Point) -> bool {
 		self.in_bounds(point)
 			&& self.tiles[get_map_idx(point.x, point.y)] == TileType::Floor

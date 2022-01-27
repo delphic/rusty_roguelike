@@ -1,10 +1,12 @@
 mod empty;
 mod rooms;
 mod automata;
+mod drunkard;
 
 use crate::prelude::*;
 // use rooms::RoomsArchitect;
-use automata::CellularAutomataArchitect;
+//use automata::CellularAutomataArchitect;
+use drunkard::DrunkardsWalkArchitect;
 use std::cmp;
 
 const NUM_ROOMS: usize = 20;
@@ -23,7 +25,7 @@ pub struct MapBuilder {
 
 impl MapBuilder {
 	pub fn new(rng: &mut RandomNumberGenerator) -> Self {
-		let mut architect = CellularAutomataArchitect {};
+		let mut architect = DrunkardsWalkArchitect {};
 		architect.init(rng)
 	}
 
@@ -55,7 +57,7 @@ impl MapBuilder {
 		const NUM_MONSTERS : usize = 50;
 
 		let mut spawnable_tiles : Vec<Point> = self.map.tiles.iter().enumerate()
-			.filter(|(idx, t)| **t == TileType::Floor && DistanceAlg::Pythagoras.distance2d(*start, self.map.index_to_point2d(*idx)) > 10.0 )
+			.filter(|(idx, t)| **t == TileType::Floor && DistanceAlg::Pythagoras.distance2d(*start, self.map.index_to_point2d(*idx)) > 10.0)
 			.map(|(idx, _)| self.map.index_to_point2d(idx))
 			.collect();
 
