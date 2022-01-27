@@ -4,8 +4,8 @@ mod automata;
 mod drunkard;
 
 use crate::prelude::*;
-// use rooms::RoomsArchitect;
-//use automata::CellularAutomataArchitect;
+use rooms::RoomsArchitect;
+use automata::CellularAutomataArchitect;
 use drunkard::DrunkardsWalkArchitect;
 use std::cmp;
 
@@ -25,7 +25,11 @@ pub struct MapBuilder {
 
 impl MapBuilder {
 	pub fn new(rng: &mut RandomNumberGenerator) -> Self {
-		let mut architect = DrunkardsWalkArchitect {};
+		let mut architect : Box<dyn MapArchitect> = match rng.range(0, 3) {
+			0 => Box::new(DrunkardsWalkArchitect {}),
+			1 => Box::new(CellularAutomataArchitect {}),
+			_ => Box::new(RoomsArchitect {}),
+		};
 		architect.init(rng)
 	}
 
