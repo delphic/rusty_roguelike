@@ -2,6 +2,7 @@ mod automata;
 mod drunkard;
 mod prefab;
 mod rooms;
+mod themes;
 
 use crate::prelude::*;
 use rooms::RoomsArchitect;
@@ -15,12 +16,17 @@ trait MapArchitect {
 	fn init(&mut self, rng: &mut RandomNumberGenerator) -> MapBuilder;
 }
 
+pub trait MapTheme : Sync + Send {
+	fn tile_to_render(&self, tile_type: TileType) -> FontCharType;
+}
+
 pub struct MapBuilder {
 	pub map : Map,
 	pub rooms : Vec<Rect>,
 	pub monster_spawns : Vec<Point>,
 	pub player_start : Point,
 	pub amulet_start : Point,
+	pub theme: Box<dyn MapTheme>,
 }
 
 impl MapBuilder {
@@ -32,6 +38,11 @@ impl MapBuilder {
 		};
 		let mut mb = architect.init(rng);
 		prefab::apply_prefab(&mut mb, rng); // Add a FORTRESS
+
+		mb.theme = match rng.range(0, 2) {
+			0 => themes::DungeonTheme::new(),
+			_ => themes::ForestTheme::new(),
+		};
 		mb
 	}
 
