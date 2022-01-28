@@ -54,7 +54,7 @@ impl State {
         spawn_amulet_of_yala(&mut world, map_builder.amulet_start);
         map_builder.monster_spawns
             .iter()
-            .for_each(|pos| spawn_monster(&mut world, &mut rng, *pos));
+            .for_each(|pos| spawn_entity(&mut world, &mut rng, *pos)); // HACK: just spawning items in monster_spawn points
 
         Self {
             world,
