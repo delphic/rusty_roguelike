@@ -1,7 +1,7 @@
-mod empty;
-mod rooms;
 mod automata;
 mod drunkard;
+mod prefab;
+mod rooms;
 
 use crate::prelude::*;
 use rooms::RoomsArchitect;
@@ -30,7 +30,9 @@ impl MapBuilder {
 			1 => Box::new(CellularAutomataArchitect {}),
 			_ => Box::new(RoomsArchitect {}),
 		};
-		architect.init(rng)
+		let mut mb = architect.init(rng);
+		prefab::apply_prefab(&mut mb, rng); // Add a FORTRESS
+		mb
 	}
 
 	fn fill(&mut self, tile: TileType) {
