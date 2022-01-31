@@ -20,7 +20,8 @@ pub fn hud(sub_world: &SubWorld) {
 
 	let mut draw_batch = DrawBatch::new();
 	draw_batch.target(LAYER);
-	draw_batch.print_centered(1, "Explore the Dungeon. Cursor keys to move.");
+
+	// Display Heatlh
 	draw_batch.bar_horizontal(
 		Point::zero(),
 		SCREEN_WIDTH * 2,
@@ -34,6 +35,17 @@ pub fn hud(sub_world: &SubWorld) {
 		ColorPair::new(WHITE, RED)
 	);
 
+	// Prompt
+	draw_batch.print_centered(1, "Explore the Dungeon. Use arrow keys to move.");
+
+	// Display Current level
+	let (_player, map_level) = <(Entity, &Player)>::query().iter(sub_world).find_map(|(entity, player)| Some((*entity, player.map_level))).unwrap();
+	draw_batch.print_color_right(
+		Point::new(SCREEN_WIDTH*2, 1),
+		format!("Dungeon Level: {}", map_level+1),
+		ColorPair::new(YELLOW, BLACK));
+
+	// Display inventory
 	let player = <(Entity, &Player)>::query().iter(sub_world).find_map(|(entity, _player)| Some(*entity)).unwrap();
 	let mut inventory_query = <(&Item, &Name, &Carried)>::query();
 	let mut y = 3;

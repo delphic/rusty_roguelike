@@ -43,18 +43,22 @@ impl State {
         let mut world = World::default();
         let mut resources = Resources::default();
         let mut rng = RandomNumberGenerator::new();
-        let map_builder = MapBuilder::new(&mut rng);
+        let mut map_builder = MapBuilder::new(&mut rng);
+
+        // Assume at least 2 levels so just spawn exit
+        let exit_idx = map_builder.map.point2d_to_index(map_builder.amulet_start);
+        map_builder.map.tiles[exit_idx] = TileType::Exit;
+
+        spawn_player(&mut world, map_builder.player_start);
+
+        map_builder.monster_spawns
+            .iter()
+            .for_each(|pos| spawn_entity(&mut world, &mut rng, *pos)); // HACK: just spawning items in monster_spawn points
 
         resources.insert(map_builder.map);
         resources.insert(Camera::new(map_builder.player_start));
         resources.insert(TurnState::AwaitingInput);
         resources.insert(map_builder.theme);
-
-        spawn_player(&mut world, map_builder.player_start);
-        spawn_amulet_of_yala(&mut world, map_builder.amulet_start);
-        map_builder.monster_spawns
-            .iter()
-            .for_each(|pos| spawn_entity(&mut world, &mut rng, *pos)); // HACK: just spawning items in monster_spawn points
 
         Self {
             world,
@@ -65,13 +69,66 @@ impl State {
         }
     }
 
+    fn advance_level(&mut self) {
+        let player_entity = *<Entity>::query().filter(component::<Player>()).iter(&mut self.world).nth(0).unwrap();
+        use std::collections::HashSet;
+        
+        // Keep player and their inventory
+        let mut entities_to_keep = HashSet::new();
+        entities_to_keep.insert(player_entity); 
+        <(Entity, &Carried)>::query().iter(&self.world).filter(|(_e, carry)| carry.0 == player_entity)
+            .map(|(e, _carry)| *e).for_each(|e| { entities_to_keep.insert(e); });
+        
+        // Remove other entities
+        let mut cb = CommandBuffer::new(&mut self.world);
+        for e in Entity::query().iter(&self.world) {
+            if !entities_to_keep.contains(e) {
+                cb.remove(*e);
+            }
+        }
+        cb.flush(&mut self.world);
+
+        // Dirty player's Field of View
+        <&mut FieldOfView>::query().iter_mut(&mut self.world).for_each(|fov| fov.is_dirty = true);
+
+        // Build new level - lotta duplicated cone in new / reset and here
+        let mut rng = RandomNumberGenerator::new();
+        let mut map_builder = MapBuilder::new(&mut rng);
+        let mut map_level = 0;
+        <(&mut Player, &mut Point)>::query().iter_mut(&mut self.world)
+            .for_each(|(player, pos)| {
+                player.map_level += 1;
+                map_level = player.map_level;
+                pos.x = map_builder.player_start.x;
+                pos.y = map_builder.player_start.y;
+            });
+        
+        if map_level == 2 {
+            spawn_amulet_of_yala(&mut self.world, map_builder.amulet_start);
+        } else {
+            let exit_idx = map_builder.map.point2d_to_index(map_builder.amulet_start);
+            map_builder.map.tiles[exit_idx] = TileType::Exit;
+        }
+
+        map_builder.monster_spawns.iter()
+            .for_each(|pos| spawn_entity(&mut self.world, &mut rng, *pos));
+        
+        self.resources.insert(map_builder.map);
+        self.resources.insert(Camera::new(map_builder.player_start));
+        self.resources.insert(TurnState::AwaitingInput);
+        self.resources.insert(map_builder.theme);
+    }
+
     fn reset(&mut self) {
         self.world = World::default();
         self.resources = Resources::default();
         let mut rng = RandomNumberGenerator::new();
-        let map_builder = MapBuilder::new(&mut rng);
+        let mut map_builder = MapBuilder::new(&mut rng);
+
         spawn_player(&mut self.world, map_builder.player_start);
-        spawn_amulet_of_yala(&mut self.world, map_builder.amulet_start);
+        // Assume at least 2 levels so just spawn exit
+        let exit_idx = map_builder.map.point2d_to_index(map_builder.amulet_start);
+        map_builder.map.tiles[exit_idx] = TileType::Exit;
         map_builder.monster_spawns.iter()
             .for_each(|pos| spawn_entity(&mut self.world, &mut rng, *pos)); // HACK: just spwaning items in monster_spawn points
         
@@ -129,6 +186,7 @@ impl GameState for State {
             TurnState::MonsterTurn => self.monster_systems.execute(&mut self.world, &mut self.resources),
             TurnState::GameOver => self.game_over(ctx),
             TurnState::Victory => self.victory(ctx),
+            TurnState::NextLevel => self.advance_level(),
         }
         render_draw_buffer(ctx).expect("Render error");
     }

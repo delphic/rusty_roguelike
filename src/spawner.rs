@@ -3,7 +3,9 @@ use crate::prelude::*;
 pub fn spawn_player(world: &mut World, pos: Point) {
 	world.push(
 		(
-			Player,
+			Player {
+				map_level: 0,
+			},
 			pos,
 			Render {
 				color: ColorPair::new(WHITE, BLACK),
@@ -28,6 +30,7 @@ pub fn spawn_amulet_of_yala(world: &mut World, pos: Point) {
 	));
 }
 
+// TODO: Replace with loot table with maximums (e.g. 1 map, 3 potions)
 pub fn spawn_entity(world: &mut World, rng: &mut RandomNumberGenerator, pos: Point) {
 	let roll = rng.roll_dice(1,12);
 	match roll {

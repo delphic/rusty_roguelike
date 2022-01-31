@@ -9,7 +9,9 @@ pub struct Render {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Player;
+pub struct Player {
+	pub map_level: u32, // Adding to player as it is kept between levels, argaubly could have a global state resource instead
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Enemy;

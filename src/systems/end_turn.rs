@@ -2,12 +2,16 @@ use crate::prelude::*;
 
 #[system]
 #[read_component(Health)]
+#[read_component(Point)]
 #[read_component(Player)]
 #[read_component(Carried)]
 #[read_component(AmuletOfYala)]
-pub fn end_turn(sub_world: &SubWorld, #[resource] turn_state: &mut TurnState) {
+pub fn end_turn(
+	sub_world: &SubWorld,
+	#[resource] turn_state: &mut TurnState,
+	#[resource] map: &Map) {
 
-	let mut player = <&Health>::query().filter(component::<Player>());
+	let mut player = <(&Health, &Point)>::query().filter(component::<Player>());
 	let mut amulet = <&Carried>::query().filter(component::<AmuletOfYala>());
 
 	let current_state = turn_state.clone();
@@ -18,11 +22,16 @@ pub fn end_turn(sub_world: &SubWorld, #[resource] turn_state: &mut TurnState) {
 		_ => current_state
 	};
 
-	player.iter(sub_world).for_each(|hp| {
+	player.iter(sub_world).for_each(|(hp, pos)| {
 		if hp.current < 1 {
 			new_state = TurnState::GameOver;
 		} else if amulet.iter(sub_world).nth(0).is_some() {
 			new_state = TurnState::Victory;
+		} else {
+			let idx = map.point2d_to_index(*pos);
+			if map.tiles[idx] == TileType::Exit {
+				new_state = TurnState::NextLevel
+			}
 		}
 	});
 
