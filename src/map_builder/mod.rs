@@ -23,7 +23,7 @@ pub trait MapTheme : Sync + Send {
 pub struct MapBuilder {
 	pub map : Map,
 	pub rooms : Vec<Rect>,
-	pub monster_spawns : Vec<Point>,
+	pub spawn_points : Vec<Point>,
 	pub player_start : Point,
 	pub amulet_start : Point,
 	pub theme: Box<dyn MapTheme>,

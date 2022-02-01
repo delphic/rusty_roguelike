@@ -50,10 +50,7 @@ impl State {
         map_builder.map.tiles[exit_idx] = TileType::Exit;
 
         spawn_player(&mut world, map_builder.player_start);
-
-        map_builder.monster_spawns
-            .iter()
-            .for_each(|pos| spawn_entity(&mut world, &mut rng, *pos)); // HACK: just spawning items in monster_spawn points
+        spawn_level(&mut world, &mut rng, 0, &map_builder.spawn_points);
 
         resources.insert(map_builder.map);
         resources.insert(Camera::new(map_builder.player_start));
@@ -110,9 +107,8 @@ impl State {
             map_builder.map.tiles[exit_idx] = TileType::Exit;
         }
 
-        map_builder.monster_spawns.iter()
-            .for_each(|pos| spawn_entity(&mut self.world, &mut rng, *pos));
-        
+        spawn_level(&mut self.world, &mut rng, map_level as usize, &map_builder.spawn_points);
+
         self.resources.insert(map_builder.map);
         self.resources.insert(Camera::new(map_builder.player_start));
         self.resources.insert(TurnState::AwaitingInput);
@@ -129,9 +125,7 @@ impl State {
         // Assume at least 2 levels so just spawn exit
         let exit_idx = map_builder.map.point2d_to_index(map_builder.amulet_start);
         map_builder.map.tiles[exit_idx] = TileType::Exit;
-        map_builder.monster_spawns.iter()
-            .for_each(|pos| spawn_entity(&mut self.world, &mut rng, *pos)); // HACK: just spwaning items in monster_spawn points
-        
+        spawn_level(&mut self.world, &mut rng, 0, &map_builder.spawn_points);
         self.resources.insert(map_builder.map);
         self.resources.insert(Camera::new(map_builder.player_start));
         self.resources.insert(TurnState::AwaitingInput);
