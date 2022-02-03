@@ -15,6 +15,7 @@ pub struct EntityDefinition {
 	pub vision_range: Option<i32>,
 	pub provides: Option<Vec<(String, i32)>>,
 	pub hp: Option<i32>,
+	pub base_damage: Option<i32>,
 }
 
 #[derive(Clone, Deserialize, Debug, PartialEq)]
@@ -94,6 +95,13 @@ impl Config {
 					_ => println!("Warning we don't know how to provide {}", provides),
 				}
 			});
+		}
+
+		if let Some(damage) = &definition.base_damage {
+			commands.add_component(entity, Damage(*damage));
+			if definition.entity_type == EntityType::Item {
+				commands.add_component(entity, Weapon{});
+			}
 		}
 	}
 }

@@ -9,6 +9,8 @@ const SORT_ORDER : usize = 10000;
 #[read_component(Item)]
 #[read_component(Name)]
 #[read_component(Carried)]
+#[read_component(Weapon)]
+#[read_component(Damage)]
 pub fn hud(sub_world: &SubWorld) {
 	let mut health_query = <&Health>::query().filter(component::<Player>()); 
 	// ^^ Why not just <(Player, &Health)>::query ? maybe we're going to look at 
@@ -47,10 +49,17 @@ pub fn hud(sub_world: &SubWorld) {
 
 	// Display inventory
 	let player = <(Entity, &Player)>::query().iter(sub_world).find_map(|(entity, _player)| Some(*entity)).unwrap();
-	let mut inventory_query = <(&Item, &Name, &Carried)>::query();
+	let mut inventory_query = <(Entity, &Item, &Name, &Carried)>::query();
 	let mut y = 3;
-	inventory_query.iter(sub_world).filter(|(_, _, carried)| carried.0 == player)
-		.for_each(|(_, name, _)| {
+	inventory_query.iter(sub_world).filter(|(entity, _, _, carried)| { 
+			let is_weapon = if let Ok(e) = sub_world.entry_ref(**entity) {
+				e.get_component::<Weapon>().is_ok()
+			} else {
+				false
+			};
+			carried.0 == player && !is_weapon
+		})
+		.for_each(|(_, _, name, _)| {
 			draw_batch.print(
 				Point::new(3, y),
 				format!("{}: {}", y-2, &name.0)
@@ -60,6 +69,18 @@ pub fn hud(sub_world: &SubWorld) {
 	if y > 3 {
 		draw_batch.print_color(Point::new(3, 2), "Items carried", ColorPair::new(YELLOW, BLACK));
 	}
+
+	// Display current weapon
+	let mut weapon_query = <(&Item, &Name, &Carried, &Damage)>::query().filter(component::<Weapon>());
+	let mut y = 3;
+	weapon_query.iter(sub_world).filter(|(_, _, carried, _)| carried.0 == player)
+		.for_each(|(_, name, _, damage)| {
+			draw_batch.print_right(
+				Point::new(SCREEN_WIDTH*2, y),
+				format!("{} ({})", &name.0, &damage.0)
+			);
+			y += 1;
+		});
 
 	draw_batch.submit(SORT_ORDER).expect("Batch error");
 }

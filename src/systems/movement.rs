@@ -6,6 +6,8 @@ use crate::prelude::*;
 #[read_component(Item)]
 #[read_component(Point)]
 #[read_component(Carried)]
+#[read_component(Weapon)]
+#[read_component(Damage)]
 pub fn movement(
 	entity: &Entity,
 	move_intent: &WantsToMove,
@@ -35,8 +37,31 @@ pub fn movement(
 						items.iter(sub_world)
 							.filter(|(_entity, _item, &item_pos)| item_pos == move_intent.destination)
 							.for_each(|(entity, _item, _item_pos)| {
-								commands.remove_component::<Point>(*entity);
-								commands.add_component(*entity,Carried(move_intent.entity));
+								let mut should_pick_up_item = true;
+
+								// If weapon only pickup
+								if let Ok(item_entry_ref) = sub_world.entry_ref(*entity) {
+									if item_entry_ref.get_component::<Weapon>().is_ok() {
+										let weapon_damage = item_entry_ref.get_component::<Damage>().unwrap();
+										<(Entity, &Carried, &Weapon, &Damage)>::query()
+											.iter(sub_world).filter(|(_, carried, _, _)| carried.0 == move_intent.entity)
+											.for_each(|(weapon_entity, _, _, current_weapon_damage)|{
+												if current_weapon_damage.0 >= weapon_damage.0 {
+													should_pick_up_item = false;
+													commands.remove(*entity);
+												} else {
+													commands.remove(*weapon_entity); 
+												}
+											});
+									}
+								} else {
+									panic!("Unable to find item_entry_ref for picked up item");
+								}
+								
+								if should_pick_up_item {
+									commands.remove_component::<Point>(*entity);
+									commands.add_component(*entity,Carried(move_intent.entity));	
+								}
 						});	
 					}
 				}
