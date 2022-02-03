@@ -7,6 +7,7 @@ use crate::prelude::*;
 #[read_component(Item)]
 #[read_component(Carried)]
 #[write_component(Health)]
+#[read_component(Weapon)]
 pub fn player_input(
 	sub_world: &mut SubWorld,
 	#[resource] key: &Option<VirtualKeyCode>,
@@ -68,7 +69,14 @@ fn use_item(n: usize, sub_world: &mut SubWorld, commands: &mut CommandBuffer) ->
 	
 	let item_entity = <(Entity, &Item, &Carried)>::query()
 		.iter(sub_world)
-		.filter(|(_, _, carried)| carried.0 == player_entity)
+		.filter(|(entity, _, carried)| { 
+			let is_weapon = if let Ok(e) = sub_world.entry_ref(**entity) {
+				e.get_component::<Weapon>().is_ok()
+			} else {
+				false
+			};
+			carried.0 == player_entity && !is_weapon
+		})
 		.enumerate()
 		.filter(|(item_count, (_, _, _))| *item_count == n)
 		.find_map(|(_, (item_entity, _, _))| Some(*item_entity));
